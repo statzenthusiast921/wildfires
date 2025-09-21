@@ -1,0 +1,134 @@
+state_name,county_name,fips_code_lz
+California,Alameda County,6001
+California,Alpine County,6003
+California,Amador County,6005
+California,Butte County,6007
+California,Calaveras County,6009
+California,Colusa County,6011
+California,Contra Costa County,6013
+California,Del Norte County,6015
+California,El Dorado County,6017
+California,Fresno County,6019
+California,Glenn County,6021
+California,Humboldt County,6023
+California,Imperial County,6025
+California,Inyo County,6027
+California,Kern County,6029
+California,Kings County,6031
+California,Lake County,6033
+California,Lassen County,6035
+California,Los Angeles County,6037
+California,Madera County,6039
+California,Marin County,6041
+California,Mariposa County,6043
+California,Mendocino County,6045
+California,Merced County,6047
+California,Modoc County,6049
+California,Mono County,6051
+California,Monterey County,6053
+California,Napa County,6055
+California,Nevada County,6057
+California,Orange County,6059
+California,Placer County,6061
+California,Plumas County,6063
+California,Riverside County,6065
+California,Sacramento County,6067
+California,San Benito County,6069
+California,San Bernardino County,6071
+California,San Diego County,6073
+California,San Francisco County,6075
+California,San Joaquin County,6077
+California,San Luis Obispo County,6079
+California,San Mateo County,6081
+California,Santa Barbara County,6083
+California,Santa Clara County,6085
+California,Santa Cruz County,6087
+California,Shasta County,6089
+California,Sierra County,6091
+California,Siskiyou County,6093
+California,Solano County,6095
+California,Sonoma County,6097
+California,Stanislaus County,6099
+California,Sutter County,6101
+California,Tehama County,6103
+California,Trinity County,6105
+California,Tulare County,6107
+California,Tuolumne County,6109
+California,Ventura County,6111
+California,Yolo County,6113
+California,Yuba County,6115
+Washington,Adams County,53001
+Washington,Asotin County,53003
+Washington,Benton County,53005
+Washington,Chelan County,53007
+Washington,Clallam County,53009
+Washington,Clark County,53011
+Washington,Columbia County,53013
+Washington,Cowlitz County,53015
+Washington,Douglas County,53017
+Washington,Ferry County,53019
+Washington,Franklin County,53021
+Washington,Garfield County,53023
+Washington,Grant County,53025
+Washington,Grays Harbor County,53027
+Washington,Island County,53029
+Washington,Jefferson County,53031
+Washington,King County,53033
+Washington,Kitsap County,53035
+Washington,Kittitas County,53037
+Washington,Klickitat County,53039
+Washington,Lewis County,53041
+Washington,Lincoln County,53043
+Washington,Mason County,53045
+Washington,Okanogan County,53047
+Washington,Pacific County,53049
+Washington,Pend Oreille County,53051
+Washington,Pierce County,53053
+Washington,San Juan County,53055
+Washington,Skagit County,53057
+Washington,Skamania County,53059
+Washington,Snohomish County,53061
+Washington,Spokane County,53063
+Washington,Stevens County,53065
+Washington,Thurston County,53067
+Washington,Wahkiakum County,53069
+Washington,Walla Walla County,53071
+Washington,Whatcom County,53073
+Washington,Whitman County,53075
+Washington,Yakima County,53077
+Oregon,Baker County,41001
+Oregon,Benton County,41003
+Oregon,Clackamas County,41005
+Oregon,Clatsop County,41007
+Oregon,Columbia County,41009
+Oregon,Coos County,41011
+Oregon,Crook County,41013
+Oregon,Curry County,41015
+Oregon,Deschutes County,41017
+Oregon,Douglas County,41019
+Oregon,Gilliam County,41021
+Oregon,Grant County,41023
+Oregon,Harney County,41025
+Oregon,Hood River County,41027
+Oregon,Jackson County,41029
+Oregon,Jefferson County,41031
+Oregon,Josephine County,41033
+Oregon,Klamath County,41035
+Oregon,Lake County,41037
+Oregon,Lane County,41039
+Oregon,Lincoln County,41041
+Oregon,Linn County,41043
+Oregon,Malheur County,41045
+Oregon,Marion County,41047
+Oregon,Morrow County,41049
+Oregon,Multnomah County,41051
+Oregon,Polk County,41053
+Oregon,Sherman County,41055
+Oregon,Tillamook County,41057
+Oregon,Umatilla County,41059
+Oregon,Union County,41061
+Oregon,Wallowa County,41063
+Oregon,Wasco County,41065
+Oregon,Washington County,41067
+Oregon,Wheeler County,41069
+Oregon,Yamhill County,41071
