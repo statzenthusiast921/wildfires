@@ -87,44 +87,47 @@ app = dash.Dash(__name__,assets_folder=os.path.join(os.curdir,"assets"))
 server = app.server
 app.layout = html.Div([
     dcc.Tabs([
-        dcc.Tab(label='Welcome',value='tab-1',style=tab_style, selected_style=tab_selected_style,
-               children=[
-                   html.Div([
-                       html.H1(dcc.Markdown('''**Welcome to my Wildfire Dashboard!**''')),
-                       html.Br()
-                   ]),
+        dcc.Tab(
+            label='Welcome',value='tab-1',style=tab_style, selected_style=tab_selected_style,
+            children=[
+                html.Div([
+                    html.H1(dcc.Markdown('''**Welcome to my Wildfire Dashboard!**''')),
+                    html.Br()
+                ]),
                    
-                   html.Div([
-                        html.P(dcc.Markdown('''**What is the purpose of this dashboard?**'''),style={'color':'white'}),
-                   ],style={'text-decoration': 'underline'}),
-                   html.Div([
-                       html.P("This dashboard was created as a tool to blah blah blah",style={'color':'white'}),
-                       html.Br()
-                   ]),
-                   html.Div([
-                       html.P(dcc.Markdown('''**What data is being used for this analysis?**'''),style={'color':'white'}),
-                   ],style={'text-decoration': 'underline'}),
+                html.Div([
+                    html.P(dcc.Markdown('''**What is the purpose of this dashboard?**'''),style={'color':'white'}),
+                ],style={'text-decoration': 'underline'}),
+                html.Div([
+                    html.P("This dashboard was created as a tool to answer the following questions:",style={'color':'white'}),
+                    html.P("1.) Where on the west coast do we see the highest concentration of fires?",style={'color':'white'}),
+                    html.P("2.) What causes these fires?",style={'color':'white'}),
+                    html.P("3.) When do these fires most often occur?",style={'color':'white'}),
+                    html.P("4.) Have fires been lasting longer or buring more acres over time?",style={'color':'white'}),
+                    html.P("5.) Can we build a model to predict fire frequency??",style={'color':'white'}),
+                    html.Br()
+                ]),
+                html.Div([
+                    html.P(dcc.Markdown('''**What data is being used for this analysis?**'''),style={'color':'white'}),
+                ],style={'text-decoration': 'underline'}),
                    
-                   html.Div([
-                       html.P(["The data utilized for this dashboard was scraped from the ",html.A('Blah.',href='')],style={'color':'white'}),
-                       html.Br()
-                   ]),
-                   html.Div([
-                       html.P(dcc.Markdown('''**What are the limitations of this data?**'''),style={'color':'white'}),
-                   ],style={'text-decoration': 'underline'}),
-                   html.Div([
-                       html.P("1.) Limitation 1 .",style={'color':'white'}),
-                       html.P("2.) Limitation 2 .",style={'color':'white'}),
-
-                   ])
-
-
-               ]),
-               dcc.Tab(label='Historical Fires',value='tab-2',style=tab_style, selected_style=tab_selected_style,
+                html.Div([
+                    html.P(["The data utilized for this analysis was taken from this Kaggle link",html.A('here',href='https://www.kaggle.com/datasets/rtatman/188-million-us-wildfires'), '.'],style={'color':'white'}),
+                    html.Br()
+                ]),
+                html.Div([
+                    html.P(dcc.Markdown('''**What are the limitations of this data?**'''),style={'color':'white'}),
+                ],style={'text-decoration': 'underline'}),
+                html.Div([
+                    html.P("1.) To build a truly solid model, I would need daily precipitation data which was difficult to find.",style={'color':'white'}),
+                    html.P("2.) Limitation 2 .",style={'color':'white'}),
+                ])
+            ]),
+            dcc.Tab(label='Where do most fires occur?',value='tab-2',style=tab_style, selected_style=tab_selected_style,
                 children = [
                     dbc.Row([
                         dbc.Col([
-                            #----- State filter
+                        #----- State filter
                             html.Label("Select a state:", style={"color": "white", "font-weight": "bold"}),
                             dcc.Dropdown(
                                 id='dropdown1',
@@ -190,8 +193,56 @@ app.layout = html.Div([
                         ], width = 6)
                     ])
 
-
-               ])
+            ]),
+            dcc.Tab(label='How have wildfires changed over time?',value='tab-3',style=tab_style, selected_style=tab_selected_style,
+                children = [
+                    dbc.Row([
+                        dbc.Col([
+                        #----- State filter
+                            html.Label("Select a state:", style={"color": "white", "font-weight": "bold"}),
+                            dcc.Dropdown(
+                                id='dropdown4',
+                                style={'color':'black'},
+                                options=[{'label': i, 'value': i} for i in state_choices],
+                                value=state_choices[0]
+                            )
+                        ], width = 4),
+                        dbc.Col([
+                        #----- County filter
+                            html.Label("Select a county:", style={"color": "white", "font-weight": "bold"}),
+                            dcc.Dropdown(
+                                id='dropdown5',
+                                style={'color':'black'},
+                                options=[{'label': i, 'value': i} for i in county_choices],
+                                value=county_choices[0]
+                            )
+                        ], width = 4),
+                         dbc.Col([
+                        #----- Cause filter
+                            html.Label("Select a cause:", style={"color": "white", "font-weight": "bold"}),
+                            dcc.Dropdown(
+                              id="dropdown6",
+                                options=cause_choices,
+                                value="All",   # start with all selected
+                                multi=False,
+                                placeholder="Select fire cause",
+                                style={"color": "black"}
+                            )
+                        ], width = 4)
+                    ]),
+                    #----- Time Series 1: # Fires per Month
+                    dbc.Row([
+                        dbc.Col([
+                            dcc.Graph(id = 'fire_timeline')
+                        ], width = 12)
+                    ]),
+                    #----- Time Series 2: # Fire size per Month
+                    dbc.Row([
+                        dbc.Col([
+                            dcc.Graph(id = 'fire_size_timeline')
+                        ], width = 12)
+                    ]),
+                ])
         
             ]
         )
@@ -204,10 +255,11 @@ app.layout = html.Div([
     Output('dropdown2', 'value'),
     Input('dropdown1', 'value') #--> choose state
 )
-def set_city_options(selected_state):
+def set_county_options(selected_state):
     return [{'label': i, 'value': i} for i in state_county_dict[selected_state]], state_county_dict[selected_state][0]
 
 
+#----- Dynamically set cause options based on available state-county values
 @app.callback(
     Output('dropdown3', 'options'),
     Output('dropdown3', 'value'),
@@ -221,7 +273,34 @@ def set_cause_options(dd1, dd2):
     return options, "All"
 
 
+#Filter county choices by state dropdown 
+@app.callback(
+    Output('dropdown5', 'options'), #--> filter counties
+    Output('dropdown5', 'value'),
+    Input('dropdown4', 'value') #--> choose state
+)
+def set_county_options2(selected_state):
+    return [{'label': i, 'value': i} for i in state_county_dict[selected_state]], state_county_dict[selected_state][0]
 
+
+#----- Dynamically set cause options based on available state-county values
+@app.callback(
+    Output('dropdown6', 'options'),
+    Output('dropdown6', 'value'),
+    Input('dropdown4', 'value'),
+    Input('dropdown5', 'value')
+)
+def set_cause_options2(dd4, dd5):
+    filtered_df = raw_wf[(raw_wf['state_name'] == dd4) & (raw_wf['county_name'] == dd5)]
+    causes = sorted(filtered_df['STAT_CAUSE_DESCR'].unique().tolist())
+    options = [{"label": "All", "value": "All"}] + [{"label": c, "value": c} for c in causes]
+    return options, "All"
+
+
+
+
+
+#----- Callback for choropleth map
 @app.callback(
     Output('historical_state_map','figure'),
     Input('dropdown1','value'),
@@ -230,13 +309,11 @@ def set_cause_options(dd1, dd2):
     Input('slider1','value')
 )
 def plot_historical_fire_map(dd1, dd2, dd3, slider_range):
-    # --- correct filtering (use filtered_df for subsequent filters) ---
     filtered_df = raw_wf[
         (raw_wf['state_name'] == dd1) &
         (raw_wf['FIRE_YEAR'] >= slider_range[0]) &
         (raw_wf['FIRE_YEAR'] <= slider_range[1])
     ]
-    # --- Handle "All" ---
     if dd3 != "All":
         filtered_df = filtered_df[filtered_df["STAT_CAUSE_DESCR"] == dd3]
 
@@ -259,7 +336,8 @@ def plot_historical_fire_map(dd1, dd2, dd3, slider_range):
     view = state_views.get(dd1, {"center": {"lat": 37.5, "lon": -119.5}, "zoom": 4})
 
     # --- Use the Mapbox choropleth so Scattermapbox overlays line up ---
-    fig = px.choropleth_mapbox(
+ # --- Use the MapLibre choropleth ---
+    fig = px.choropleth_map(
         fire_counts,
         geojson=counties,
         locations="FIPS",
@@ -267,22 +345,24 @@ def plot_historical_fire_map(dd1, dd2, dd3, slider_range):
         hover_name="county_name",
         color_continuous_scale="Oranges",
         opacity=0.6,
-        mapbox_style="carto-positron",
         center=view["center"],
         zoom=view["zoom"],
         labels={"count": "# Fires"},
-        featureidkey="id"  ,
+        featureidkey="id",
         title=f"Wildfires in {dd1} ({slider_range[0]}-{slider_range[1]})"
-
     )
+
     fig.update_layout(
         margin=dict(t=30, l=0, r=0, b=0),
         coloraxis_showscale=True,
-        title_x=0.5,
-        )
-    fig.update_traces(
-        hovertemplate="County: %{hovertext}<br># Fires: %{z}<extra></extra>"
+        title_x=0.5
     )
+
+    # Hover template
+    fig.update_traces(
+        hovertemplate="County: %{hover_name}<br># Fires: %{z}<extra></extra>"
+    )
+
 
     # --- overlay blue outline for selected county ---
     if dd2 and dd2 in fire_counts['county_name'].values:
@@ -341,6 +421,7 @@ def plot_historical_fire_map(dd1, dd2, dd3, slider_range):
 
     return fig
 
+#----- Callback for County Treemap of Causes
 @app.callback(
     Output('county_chart','figure'),
     Input('dropdown1','value'),
@@ -378,6 +459,58 @@ def county_chart(dd1, dd2, slider_range):
 
     return fig
 
+#----- Callback for time series of fires 
+@app.callback(
+    Output('fire_timeline','figure'),
+    Input('dropdown4','value'),
+    Input('dropdown5','value'),
+    Input('dropdown6','value')
+)
+def timeline_of_fires(dd4, dd5, dd6):
+
+    filtered_df = raw_wf[
+        (raw_wf['state_name']==dd4) &
+        (raw_wf['county_name']==dd5)
+    ]
+
+    if dd6 != "All":
+        filtered_df = filtered_df[filtered_df["STAT_CAUSE_DESCR"] == dd6]
+
+    #----- Make sure StartDate is datetime
+    filtered_df["StartDate"] = pd.to_datetime(filtered_df["StartDate"])
+
+    #----- Collapse to first of month
+    filtered_df["Month"] = filtered_df["StartDate"].dt.to_period("M").dt.to_timestamp()
+
+    #----- Group by cause + month
+    monthly_counts = (
+        filtered_df.groupby(["STAT_CAUSE_DESCR", "Month"])
+        .size()
+        .reset_index(name="count")
+    )
+    monthly_counts = monthly_counts.sort_values("Month")
+
+
+    fig = px.line(
+        monthly_counts, 
+        x='Month', y='count',
+        color='STAT_CAUSE_DESCR',
+        labels={"StartDate": "Date", "count": "# Fires", "STAT_CAUSE_DESCR": "Cause"},
+        title="Timeline of Fires by Cause"
+    )
+
+    fig.update_layout(
+        xaxis_title="Date",
+        yaxis_title="# Fires",
+        xaxis=dict(
+            dtick="M6", 
+            tickformat="%Y-%m",
+            tickangle=270
+        ),
+        bargap=0.05,
+        legend_title="Cause"
+    )
+    return fig
 
 if __name__=='__main__':
     app.run(debug=True)
