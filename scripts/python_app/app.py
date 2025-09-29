@@ -230,18 +230,14 @@ app.layout = html.Div([
                             )
                         ], width = 4)
                     ]),
-                    #----- Time Series 1: # Fires per Month
                     dbc.Row([
                         dbc.Col([
-                            dcc.Graph(id = 'fire_timeline')
-                        ], width = 12)
-                    ]),
-                    #----- Time Series 2: # Fire size per Month
-                    dbc.Row([
-                        dbc.Col([
+                            #----- Time Series 1: # Fire Count per Month
+                            dcc.Graph(id = 'fire_count_timeline'),
+                            #----- Time Series 2: # Fire Size per Month
                             dcc.Graph(id = 'fire_size_timeline')
                         ], width = 12)
-                    ]),
+                    ])
                 ])
         
             ]
@@ -459,9 +455,13 @@ def county_chart(dd1, dd2, slider_range):
 
     return fig
 
+#---------------------------------------#
+#---------- TAB 3: Timelines -----------#
+#---------------------------------------#
+
 #----- Callback for time series of fires 
 @app.callback(
-    Output('fire_timeline','figure'),
+    Output('fire_count_timeline','figure'),
     Input('dropdown4','value'),
     Input('dropdown5','value'),
     Input('dropdown6','value')
@@ -511,6 +511,65 @@ def timeline_of_fires(dd4, dd5, dd6):
         legend_title="Cause"
     )
     return fig
+
+
+
+# #----- Callback for time series of fire sizes
+# @app.callback(
+#     Output('fire_size_timeline','figure'),
+#     Input('dropdown4','value'),
+#     Input('dropdown5','value'),
+#     Input('dropdown6','value')
+# )
+# def timeline_of_fire_sizes(dd4, dd5, dd6):
+
+#     filtered_df = raw_wf[
+#         (raw_wf['state_name']==dd4) &
+#         (raw_wf['county_name']==dd5)
+#     ]
+
+#     if dd6 != "All":
+#         filtered_df = filtered_df[filtered_df["STAT_CAUSE_DESCR"] == dd6]
+
+#     #----- Make sure StartDate is datetime
+#     filtered_df["StartDate"] = pd.to_datetime(filtered_df["StartDate"])
+
+#     #----- Collapse to first of month
+#     filtered_df["Month"] = filtered_df["StartDate"].dt.to_period("M").dt.to_timestamp()
+
+#     #----- Group by cause + month
+#     monthly_counts = (
+#         filtered_df.groupby(["STAT_CAUSE_DESCR", "Month"])['FIRE_SIZE']
+#         .mean()
+#         .reset_index(name="avg_fire_size")
+#     )
+#     monthly_counts = monthly_counts.sort_values("Month")
+
+
+#     fig = px.line(
+#         monthly_counts, 
+#         x='Month', y='avg_fire_size',
+#         color='STAT_CAUSE_DESCR',
+#         labels={
+#             "Month": "Month", 
+#             "avg_fire_size": "Avg Fire Size", 
+#             "STAT_CAUSE_DESCR": "Cause"
+#         },
+#         title="Timeline of Fire Sizes by Cause"
+#     )
+
+#     fig.update_layout(
+#         xaxis_title="Month",
+#         yaxis_title="Avg Fire Size",
+#         xaxis=dict(
+#             dtick="M6", 
+#             tickformat="%Y-%m",
+#             tickangle=270
+#         ),
+#         legend_title="Cause"
+#     )
+#     return fig
+    
 
 if __name__=='__main__':
     app.run(debug=True)
