@@ -37,16 +37,16 @@ raw_wf['FIPS'] = raw_wf.apply(
 #----- Condense cause categories down a bit
 cause_mapping = {
     # Map multiple specific causes to a single "Human - Equipment" category
-    'Campfire': 'Accidental_Recreation',
-    'Children': 'Accidental_Recreation',
-    'Fireworks': 'Accidental_Recreation',
-    'Smoking': 'Accidental_Recreation',
-    'Equipment Use': 'Accidental_Infra',
-    'Powerline': 'Accidental_Infra',
-    'Railroad': 'Accidental_Infra',
+    'Campfire': 'Recreation (Accident)',
+    'Children': 'Recreation (Accident)',
+    'Fireworks': 'Recreation (Accident)',
+    'Smoking': 'Recreation (Accident)',
+    'Equipment Use': 'Infrastructure (Accident)',
+    'Powerline': 'Infrastructure (Accident)',
+    'Railroad': 'Infrastructure (Accident)',
 
-    'Debris Burning': 'Accidental_LandMgmt',
-    'Structure': 'Accidental_LandMgmt',
+    'Debris Burning': 'Land Management (Accident)',
+    'Structure': 'Land Management (Accident)',
     'Missing/Undefined':'Miscellaneous',
     'Miscellaneous':'Miscellaneous'
 
@@ -73,6 +73,7 @@ cause_choices_condensed = [{"label": "All Causes", "value": "All"}] + [
     {"label": c, "value": c} for c in raw_wf["CONDENSED_CAUSE"].unique()
 ]
 
+plot_choices = ['# Fires','Avg Fire Size']
 
 #----- State --> County Dictionary
 df_for_dict = raw_wf[['state_name','county_name']]
@@ -228,7 +229,7 @@ app.layout = html.Div([
                                 options=[{'label': i, 'value': i} for i in state_choices],
                                 value=state_choices[0]
                             )
-                        ], width = 4),
+                        ], width = 3),
                         dbc.Col([
                         #----- County filter
                             html.Label("Select a county:", style={"color": "white", "font-weight": "bold"}),
@@ -238,7 +239,7 @@ app.layout = html.Div([
                                 options=[{'label': i, 'value': i} for i in county_choices],
                                 value=county_choices[0]
                             )
-                        ], width = 4),
+                        ], width = 3),
                          dbc.Col([
                         #----- Cause filter
                             html.Label("Select a cause:", style={"color": "white", "font-weight": "bold"}),
@@ -250,14 +251,34 @@ app.layout = html.Div([
                                 placeholder="Select fire cause",
                                 style={"color": "black"}
                             )
-                        ], width = 4)
+                        ], width = 3),
+                        dbc.Col([
+                        #----- Plot filter
+                            html.Label("Select a plot:", style={"color": "white", "font-weight": "bold"}),
+                            dcc.Dropdown(
+                                id='dropdown7',
+                                style={'color':'black'},
+                                options=[{'label': i, 'value': i} for i in plot_choices],
+                                value=plot_choices[0]
+                            )
+                        ], width = 3),
+                    ]),
+                    #----- Cards for Timeline
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Card(id='card4')
+                        ], width = 4),
+                        dbc.Col([
+                            dbc.Card(id='card5')
+                        ], width = 4),
+                        dbc.Col([
+                            dbc.Card(id='card6')
+                        ], width = 4),
                     ]),
                     dbc.Row([
                         dbc.Col([
-                            #----- Time Series 1: # Fire Count per Month
-                            dcc.Graph(id = 'fire_count_timeline', style={'height': '400px'}),
-                            #----- Time Series 2: # Fire Size per Month
-                            dcc.Graph(id = 'fire_size_timeline', style={'height': '400px'})
+                            #----- Timeline of Fires (Choose a chart)
+                            dcc.Graph(id = 'fire_timeline', style={'height': '400px'}),
                         ], width = 12)
                     ])
                 ]
@@ -329,10 +350,6 @@ def set_cause_options2(dd4, dd5):
     options = [{"label": "All", "value": "All"}] + [{"label": c, "value": c} for c in causes]
     return options, "All"
 
-
-
-
-
 #----- Callback for choropleth map
 @app.callback(
     Output('historical_state_map','figure'),
@@ -369,31 +386,34 @@ def plot_historical_fire_map(dd1, dd2, dd3, slider_range):
     view = state_views.get(dd1, {"center": {"lat": 37.5, "lon": -119.5}, "zoom": 4})
 
     # --- Use the Mapbox choropleth so Scattermapbox overlays line up ---
- # --- Use the MapLibre choropleth ---
-    fig = px.choropleth_map(
+    fig = px.choropleth_mapbox(
         fire_counts,
         geojson=counties,
         locations="FIPS",
         color="count",
-        hover_name="county_name",
+        #hover_name="county_name",
+        hover_data = {"county_name": True, "count": True, 'FIPS': False},
         color_continuous_scale="Oranges",
         opacity=0.6,
         center=view["center"],
         zoom=view["zoom"],
-        labels={"count": "# Fires"},
+        labels={
+            "count": "# Fires",
+            "county_name": "County Name"  
+        },
         featureidkey="id",
         title=f"Wildfires in {dd1} ({slider_range[0]}-{slider_range[1]})"
+
     )
 
     fig.update_layout(
         margin=dict(t=30, l=0, r=0, b=0),
         coloraxis_showscale=True,
-        title_x=0.5
-    )
-
-    # Hover template
-    fig.update_traces(
-        hovertemplate="County: %{hover_name}<br># Fires: %{z}<extra></extra>"
+        title_x=0.5,
+        mapbox_style="carto-positron",
+        paper_bgcolor='black',
+        plot_bgcolor='black',
+        font=dict(color='white')
     )
 
 
@@ -487,7 +507,10 @@ def county_chart(dd1, dd2, slider_range):
         title=f"Wildfire Causes in {dd2}, {dd1} ({slider_range[0]}–{slider_range[1]})",
         title_x=0.5,
         margin=dict(t=30, l=0, r=0, b=0),
-        uniformtext=dict(minsize=10, mode="hide")
+        uniformtext=dict(minsize=10, mode="hide"),
+        paper_bgcolor='black',
+        plot_bgcolor='black',
+        font=dict(color='white')
     )
 
     return fig
@@ -496,109 +519,98 @@ def county_chart(dd1, dd2, slider_range):
 #---------- TAB 3: Timelines -----------#
 #---------------------------------------#
 
+
+#----- Callback for the three cards
+@app.callback(
+    Output('card4','children'),
+    Output('card5','children'),
+    Output('card6','children'),
+
+    Input('dropdown4','value'),
+    Input('dropdown5','value'),
+    Input('dropdown6','value'),
+    Input('dropdown7','value')
+)
+def timeline_of_fires(dd4, dd5, dd6, dd7):
+
+    filtered_df = raw_wf[
+        (raw_wf['state_name']==dd4) &
+        (raw_wf['county_name']==dd5)
+    ]
+
+    # filtered_df = raw_wf[
+    #     (raw_wf['state_name']=="Oregon") &
+    #     (raw_wf['county_name']=="Multnomah County")
+    # ]
+
+    if dd6 != "All":
+        filtered_df = filtered_df[filtered_df["CONDENSED_CAUSE"] == dd6]
+
+    filtered_df["StartDate"] = pd.to_datetime(filtered_df["StartDate"])
+    filtered_df['month_name'] = filtered_df['StartDate'].dt.month_name()
+    most_frequent_month = filtered_df["month_name"].value_counts().index[0]
+    most_frequent_month_num= int(filtered_df["month_name"].value_counts().iloc[0])
+
+    card4 = dbc.Card([
+            dbc.CardBody([
+                html.P(f'Most Frequent Month'),
+                html.H5(f"{most_frequent_month} ({most_frequent_month_num})")
+            ])
+        ],
+        style={'display': 'inline-block',
+            'width': '100%',
+            'text-align': 'center',
+            'background-color': '#70747c',
+            'color':'white',
+            'fontWeight': 'bold',
+            'fontSize':16},
+        outline=True)
+
+    card5 = dbc.Card([
+            dbc.CardBody([
+                html.P(f'Total Fires in Last Year'),
+                html.H5(f"{most_frequent_month} ({most_frequent_month_num})")
+            ])
+        ],
+        style={'display': 'inline-block',
+            'width': '100%',
+            'text-align': 'center',
+            'background-color': '#70747c',
+            'color':'white',
+            'fontWeight': 'bold',
+            'fontSize':16},
+        outline=True)
+
+
+    card6 = dbc.Card([
+            dbc.CardBody([
+                html.P(f'Rolling Average of last year'),
+                html.H5(f"{most_frequent_month} ({most_frequent_month_num})")
+            ])
+        ],
+        style={'display': 'inline-block',
+            'width': '100%',
+            'text-align': 'center',
+            'background-color': '#70747c',
+            'color':'white',
+            'fontWeight': 'bold',
+            'fontSize':16},
+        outline=True)
+
+
+    return card4, card5, card6
+
+
+
 #----- Callback for time series of fires 
 @app.callback(
-    Output('fire_count_timeline','figure'),
+    Output('fire_timeline','figure'),
     Input('dropdown4','value'),
     Input('dropdown5','value'),
-    Input('dropdown6','value')
+    Input('dropdown6','value'),
+    Input('dropdown7','value')
 )
-def timeline_of_fires(dd4, dd5, dd6):
-
-    filtered_df = raw_wf[
-        (raw_wf['state_name']==dd4) &
-        (raw_wf['county_name']==dd5)
-    ]
-
-
-
-    if dd6 != "All":
-        filtered_df = filtered_df[filtered_df["CONDENSED_CAUSE"] == dd6]
-
-    #----- Make sure StartDate is datetime
-    filtered_df["StartDate"] = pd.to_datetime(filtered_df["StartDate"])
-
-    #----- Collapse to first of month
-    filtered_df["Month"] = filtered_df["StartDate"].dt.to_period("M").dt.to_timestamp()
-
-    #----- Group by cause + month
-    monthly_counts = (
-        filtered_df.groupby(["CONDENSED_CAUSE", "Month"])
-        .size()
-        .reset_index(name="count")
-    )
-
-    min_date = monthly_counts['Month'].min()
-    max_date = monthly_counts['Month'].max()
-
-    # Generate a continuous range of months (timestamps)
-    full_month_range = pd.date_range(start=min_date, end=max_date, freq='MS') # 'MS' is Month Start
-
-    # 3. Create a DataFrame with all combinations of Cause and Month
-    # Get all unique causes
-    all_causes = monthly_counts['CONDENSED_CAUSE'].unique()
-
-    # Create a MultiIndex of all combinations
-    multi_index = pd.MultiIndex.from_product(
-        [all_causes, full_month_range], 
-        names=['CONDENSED_CAUSE', 'Month']
-    )
-
-    # Create an empty DataFrame with all combinations
-    complete_index_df = pd.DataFrame(index=multi_index).reset_index()
-
-    # 4. Merge the original data with the complete index
-    # A left merge will keep all rows from complete_index_df (all months/causes)
-    # and fill missing 'avg_fire_size' values with NaN.
-    imputed_df = pd.merge(
-        complete_index_df,
-        monthly_counts,
-        on=['CONDENSED_CAUSE', 'Month'],
-        how='left'
-    )
-
-    # 5. Fill the NaN values with 0
-    # Fill NaN for avg_fire_size where there was no data in that month
-    imputed_df['count'] = imputed_df['count'].fillna(0)
-
-    # Sort the final result
-    monthly_counts = imputed_df.sort_values("Month")
-
-    
-
-    fig = px.line(
-        monthly_counts, 
-        x='Month', y='count',
-        color='CONDENSED_CAUSE',
-        labels={
-            "StartDate": "Date", 
-            "count": "# Fires", 
-            "CONDENSED_CAUSE": "Cause"},
-        title="Timeline of Fires by Cause"
-    )
-
-    fig.update_layout(
-        xaxis_title="Date",
-        yaxis_title="# Fires",
-        xaxis=dict(
-            #tickformat="%Y-%m",   
-            #tickangle=45  
-            type="date"       
-        ),
-        legend_title="Cause"
-    )
-    return fig
-
-
-
-#----- Callback for time series of fire sizes
-@app.callback(
-    Output('fire_size_timeline','figure'),
-    Input('dropdown4','value'),
-    Input('dropdown5','value'),
-    Input('dropdown6','value')
-)
-def timeline_of_fire_sizes(dd4, dd5, dd6):
+def timeline_of_fires(dd4, dd5, dd6, dd7):
 
     filtered_df = raw_wf[
         (raw_wf['state_name']==dd4) &
@@ -608,78 +620,211 @@ def timeline_of_fire_sizes(dd4, dd5, dd6):
     if dd6 != "All":
         filtered_df = filtered_df[filtered_df["CONDENSED_CAUSE"] == dd6]
 
-    #----- Make sure StartDate is datetime
-    filtered_df["StartDate"] = pd.to_datetime(filtered_df["StartDate"])
+    if dd7 == "# Fires":
+        #----- Make sure StartDate is datetime
+        filtered_df["StartDate"] = pd.to_datetime(filtered_df["StartDate"])
 
-    #----- Collapse to first of month
-    filtered_df["Month"] = filtered_df["StartDate"].dt.to_period("M").dt.to_timestamp()
+        #----- Collapse to first of month
+        filtered_df["Month"] = filtered_df["StartDate"].dt.to_period("M").dt.to_timestamp()
 
-    #----- Group by cause + month
-    monthly_counts = (
-        filtered_df.groupby(["CONDENSED_CAUSE", "Month"])['FIRE_SIZE']
-        .mean()
-        .reset_index(name="avg_fire_size")
-    )
+        #----- Group by cause + month
+        monthly_counts = (
+            filtered_df.groupby(["CONDENSED_CAUSE", "Month"])
+            .size()
+            .reset_index(name="count")
+        )
 
-    min_date = monthly_counts['Month'].min()
-    max_date = monthly_counts['Month'].max()
+        min_date = monthly_counts['Month'].min()
+        max_date = monthly_counts['Month'].max()
 
-    # Generate a continuous range of months (timestamps)
-    full_month_range = pd.date_range(start=min_date, end=max_date, freq='MS') # 'MS' is Month Start
+        # Generate a continuous range of months (timestamps)
+        full_month_range = pd.date_range(start=min_date, end=max_date, freq='MS') 
 
-    # 3. Create a DataFrame with all combinations of Cause and Month
-    # Get all unique causes
-    all_causes = monthly_counts['CONDENSED_CAUSE'].unique()
+        # 3. Create a DataFrame with all combinations of Cause and Month
+        # Get all unique causes
+        all_causes = monthly_counts['CONDENSED_CAUSE'].unique()
 
-    # Create a MultiIndex of all combinations
-    multi_index = pd.MultiIndex.from_product(
-        [all_causes, full_month_range], 
-        names=['CONDENSED_CAUSE', 'Month']
-    )
+        # Create a MultiIndex of all combinations
+        multi_index = pd.MultiIndex.from_product(
+            [all_causes, full_month_range], 
+            names=['CONDENSED_CAUSE', 'Month']
+        )
 
-    # Create an empty DataFrame with all combinations
-    complete_index_df = pd.DataFrame(index=multi_index).reset_index()
+        # Create an empty DataFrame with all combinations
+        complete_index_df = pd.DataFrame(index=multi_index).reset_index()
 
-    # 4. Merge the original data with the complete index
-    # A left merge will keep all rows from complete_index_df (all months/causes)
-    # and fill missing 'avg_fire_size' values with NaN.
-    imputed_df = pd.merge(
-        complete_index_df,
-        monthly_counts,
-        on=['CONDENSED_CAUSE', 'Month'],
-        how='left'
-    )
+        # 4. Merge the original data with the complete index
+        # A left merge will keep all rows from complete_index_df (all months/causes)
+        # and fill missing 'avg_fire_size' values with NaN.
+        imputed_df = pd.merge(
+            complete_index_df,
+            monthly_counts,
+            on=['CONDENSED_CAUSE', 'Month'],
+            how='left'
+        )
 
-    # 5. Fill the NaN values with 0
-    # Fill NaN for avg_fire_size where there was no data in that month
-    imputed_df['avg_fire_size'] = imputed_df['avg_fire_size'].fillna(0)
+        # 5. Fill the NaN values with 0
+        # Fill NaN for avg_fire_size where there was no data in that month
+        imputed_df['count'] = imputed_df['count'].fillna(0)
 
-    monthly_counts = monthly_counts.sort_values("Month")
+        # Sort the final result
+        monthly_counts = imputed_df.sort_values("Month")
 
-    fig = px.line(
-        monthly_counts, 
-        x='Month', y='avg_fire_size',
-        color='CONDENSED_CAUSE',
-        labels={
-            "Month": "Month", 
-            "avg_fire_size": "Avg Fire Size", 
-            "CONDENSED_CAUSE": "Cause"
-        },
-        title="Timeline of Fire Sizes by Cause"
-    )
+        fig = px.line(
+            monthly_counts, 
+            x='Month', y='count',
+            color='CONDENSED_CAUSE',
+            labels={
+                "StartDate": "Date", 
+                "count": "# Fires", 
+                "CONDENSED_CAUSE": "Cause"},
+            title="Timeline of Fires by Cause"
+        )
 
-    fig.update_layout(
-        xaxis_title="Month",
-        yaxis_title="Avg Fire Size",
-        xaxis=dict(
-            dtick="M6", 
-            tickformat="%Y-%m",
-            tickangle=270
-        ),
-        legend_title="Cause"
-    )
-    return fig
-    
+        fig.update_layout(
+            xaxis_title="Month",
+            yaxis_title="# Fires",
+            xaxis=dict(
+                dtick="M12", 
+                tickformat="%Y-%m",
+                tickangle=270
+            ),
+            legend_title="Cause",
+            plot_bgcolor="#222222",  
+            paper_bgcolor="#222222" ,
+            font=dict(color="white"),  # all text in white
+            title_font=dict(color="white"),  # title specifically
+            legend=dict(
+                font=dict(color="white"),  # legend text white
+                bgcolor="#222222",  # dark legend background
+            )
+        )
+
+        fig.update_xaxes(color="white", showgrid=False, zeroline=False)
+        fig.update_yaxes(color="white", showgrid=False, zeroline=False)
+        # Find the max value per cause
+        color_map = {trace.name: trace.line.color for trace in fig.data}
+
+        max_points = monthly_counts.groupby('CONDENSED_CAUSE')['count'].idxmax()
+        for idx in max_points:
+            row = monthly_counts.loc[idx]
+            fig.add_annotation(
+                x=row['Month'],
+                y=row['count'],
+                text=f"Max: {int(row['count'])}",
+                showarrow=True,
+                arrowhead=2,
+                ax=0,
+                ay=-30,  # move text above the point
+                bgcolor=color_map[row['CONDENSED_CAUSE']],
+                bordercolor="black"
+            )
+
+        return fig
+    else:
+
+        #----- Make sure StartDate is datetime
+        filtered_df["StartDate"] = pd.to_datetime(filtered_df["StartDate"])
+
+        #----- Collapse to first of month
+        filtered_df["Month"] = filtered_df["StartDate"].dt.to_period("M").dt.to_timestamp()
+
+        #----- Group by cause + month
+        monthly_counts = (
+            filtered_df.groupby(["CONDENSED_CAUSE", "Month"])['FIRE_SIZE']
+            .mean()
+            .reset_index(name="avg_fire_size")
+        )
+
+        min_date = monthly_counts['Month'].min()
+        max_date = monthly_counts['Month'].max()
+
+        # Generate a continuous range of months (timestamps)
+        full_month_range = pd.date_range(start=min_date, end=max_date, freq='MS') # 'MS' is Month Start
+
+        # 3. Create a DataFrame with all combinations of Cause and Month
+        # Get all unique causes
+        all_causes = monthly_counts['CONDENSED_CAUSE'].unique()
+
+        # Create a MultiIndex of all combinations
+        multi_index = pd.MultiIndex.from_product(
+            [all_causes, full_month_range], 
+            names=['CONDENSED_CAUSE', 'Month']
+        )
+
+        # Create an empty DataFrame with all combinations
+        complete_index_df = pd.DataFrame(index=multi_index).reset_index()
+
+        # 4. Merge the original data with the complete index
+        # A left merge will keep all rows from complete_index_df (all months/causes)
+        # and fill missing 'avg_fire_size' values with NaN.
+        imputed_df = pd.merge(
+            complete_index_df,
+            monthly_counts,
+            on=['CONDENSED_CAUSE', 'Month'],
+            how='left'
+        )
+
+        # 5. Fill the NaN values with 0
+        # Fill NaN for avg_fire_size where there was no data in that month
+        imputed_df['avg_fire_size'] = imputed_df['avg_fire_size'].fillna(0)
+
+        monthly_counts = imputed_df.sort_values("Month")
+
+        fig = px.line(
+            monthly_counts, 
+            x='Month', y='avg_fire_size',
+            color='CONDENSED_CAUSE',
+            labels={
+                "Month": "Month", 
+                "avg_fire_size": "Avg Fire Size", 
+                "CONDENSED_CAUSE": "Cause"
+            },
+            title="Timeline of Fire Sizes by Cause"
+        )
+
+        fig.update_layout(
+            xaxis_title="Month",
+            yaxis_title="Avg Fire Size",
+            xaxis=dict(
+                dtick="M12", 
+                tickformat="%Y-%m",
+                tickangle=270
+            ),
+            legend_title="Cause",
+            plot_bgcolor="#222222",  
+            paper_bgcolor="#222222" ,
+            font=dict(color="white"),  # all text in white
+            title_font=dict(color="white"),  # title specifically
+            legend=dict(
+                font=dict(color="white"),  # legend text white
+                bgcolor="#222222",  # dark legend background
+            )
+        )
+
+        fig.update_xaxes(color="white", showgrid=False, zeroline=False)
+        fig.update_yaxes(color="white", showgrid=False, zeroline=False)
+
+            # Find the max value per cause
+        color_map = {trace.name: trace.line.color for trace in fig.data}
+
+        max_points = monthly_counts.groupby('CONDENSED_CAUSE')['avg_fire_size'].idxmax()
+        for idx in max_points:
+            row = monthly_counts.loc[idx]
+            fig.add_annotation(
+                x=row['Month'],
+                y=row['avg_fire_size'],
+                text=f"Max: {row['avg_fire_size']:.1f}",
+                showarrow=True,
+                arrowhead=2,
+                ax=0,
+                ay=-30,
+                bgcolor=color_map[row['CONDENSED_CAUSE']],
+                bordercolor="black"
+            )
+
+        return fig
+        
 
 if __name__=='__main__':
     app.run(debug=True)
