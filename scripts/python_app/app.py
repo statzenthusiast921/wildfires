@@ -12,6 +12,8 @@ from urllib.request import urlopen
 import plotly.io as pio
 pio.renderers.default = "vscode"
 import plotly.graph_objects as go
+from scipy.stats import linregress
+
 
 print("Hello!")
 
@@ -207,6 +209,18 @@ app.layout = html.Div([
                             )
                         ])
                     ]),
+                    #----- Cards for Choropleth/Treemaps
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Card(id='card1')
+                        ], width = 4),
+                        dbc.Col([
+                            dbc.Card(id='card2')
+                        ], width = 4),
+                        dbc.Col([
+                            dbc.Card(id='card3')
+                        ], width = 4),
+                    ]),
                     dbc.Row([
                         dbc.Col([
                             dcc.Graph(id='historical_state_map')
@@ -287,7 +301,25 @@ app.layout = html.Div([
                 children = [
                     dbc.Row([
                         dbc.Col([
-                        ])
+                        #----- State filter
+                            html.Label("Select a state:", style={"color": "white", "font-weight": "bold"}),
+                            dcc.Dropdown(
+                                id='dropdown8',
+                                style={'color':'black'},
+                                options=[{'label': i, 'value': i} for i in state_choices],
+                                value=state_choices[0]
+                            )
+                        ], width = 6),
+                        dbc.Col([
+                        #----- County filter
+                            html.Label("Select a county:", style={"color": "white", "font-weight": "bold"}),
+                            dcc.Dropdown(
+                                id='dropdown9',
+                                style={'color':'black'},
+                                options=[{'label': i, 'value': i} for i in county_choices],
+                                value=county_choices[0]
+                            )
+                        ], width = 6),
                     ])
                 ]
             )
@@ -349,6 +381,17 @@ def set_cause_options2(dd4, dd5):
     causes = sorted(filtered_df['CONDENSED_CAUSE'].unique().tolist())
     options = [{"label": "All", "value": "All"}] + [{"label": c, "value": c} for c in causes]
     return options, "All"
+
+
+#Filter county choices by state dropdown 
+@app.callback(
+    Output('dropdown9', 'options'), #--> filter counties
+    Output('dropdown9', 'value'),
+    Input('dropdown8', 'value') #--> choose state
+)
+def set_county_options3(selected_state):
+    return [{'label': i, 'value': i} for i in state_county_dict[selected_state]], state_county_dict[selected_state][0]
+
 
 #----- Callback for choropleth map
 @app.callback(
@@ -474,6 +517,90 @@ def plot_historical_fire_map(dd1, dd2, dd3, slider_range):
 
     return fig
 
+
+@app.callback(
+    Output('card1','children'),
+    Output('card2','children'),
+    Output('card3','children'),
+    Input('dropdown1','value'),
+    Input('dropdown2','value'),
+    Input('dropdown3','value'),
+    Input('slider1','value')
+
+)
+def tab1_cards(dd1, dd2, dd3, slider_range):
+
+    filtered_df = raw_wf[
+        (raw_wf['state_name'] == dd1) &
+        (raw_wf['county_name'] == dd2) &
+        (raw_wf['FIRE_YEAR'] >= slider_range[0]) &
+        (raw_wf['FIRE_YEAR'] <= slider_range[1])
+    ]
+
+    # filtered_df = raw_wf[
+    #     (raw_wf['state_name'] == "Oregon") &
+    #     (raw_wf['county_name'] == "Multnomah County") &
+    #     (raw_wf['FIRE_YEAR'] >= 2010) &
+    #     (raw_wf['FIRE_YEAR'] <= 2015)
+    # ]
+    if dd3 != "All":
+        filtered_df = filtered_df[filtered_df["STAT_CAUSE_DESCR"] == dd3]
+
+
+    card1 = dbc.Card([
+                dbc.CardBody([
+                    html.P(f'Metric1'),
+                    html.H5(f"")
+                ])
+            ],
+            style={'display': 'inline-block',
+                'width': '100%',
+                'text-align': 'center',
+                'background-color': '#70747c',
+                'color':'white',
+                'fontWeight': 'bold',
+                'fontSize':16},
+            outline=True)
+
+
+    card2 = dbc.Card([
+                dbc.CardBody([
+                    html.P(f'Metric2'),
+                    html.H5(f"")
+                ])
+            ],
+            style={'display': 'inline-block',
+                'width': '100%',
+                'text-align': 'center',
+                'background-color': '#70747c',
+                'color':'white',
+                'fontWeight': 'bold',
+                'fontSize':16},
+            outline=True)
+
+
+    card3 = dbc.Card([
+                dbc.CardBody([
+                    html.P(f'Metric3'),
+                    html.H5(f"")
+                ])
+            ],
+            style={'display': 'inline-block',
+                'width': '100%',
+                'text-align': 'center',
+                'background-color': '#70747c',
+                'color':'white',
+                'fontWeight': 'bold',
+                'fontSize':16},
+            outline=True)
+
+
+
+
+
+    return card1, card2, card3
+    
+
 #----- Callback for County Treemap of Causes
 @app.callback(
     Output('county_chart','figure'),
@@ -546,57 +673,133 @@ def timeline_of_fires(dd4, dd5, dd6, dd7):
     if dd6 != "All":
         filtered_df = filtered_df[filtered_df["CONDENSED_CAUSE"] == dd6]
 
-    filtered_df["StartDate"] = pd.to_datetime(filtered_df["StartDate"])
-    filtered_df['month_name'] = filtered_df['StartDate'].dt.month_name()
-    most_frequent_month = filtered_df["month_name"].value_counts().index[0]
-    most_frequent_month_num= int(filtered_df["month_name"].value_counts().iloc[0])
+    if dd7 == "# Fires":
+        filtered_df["StartDate"] = pd.to_datetime(filtered_df["StartDate"])
+        filtered_df['month_name'] = filtered_df['StartDate'].dt.month_name()
+        most_frequent_month = filtered_df["month_name"].value_counts().index[0]
 
-    card4 = dbc.Card([
-            dbc.CardBody([
-                html.P(f'Most Frequent Month'),
-                html.H5(f"{most_frequent_month} ({most_frequent_month_num})")
-            ])
-        ],
-        style={'display': 'inline-block',
-            'width': '100%',
-            'text-align': 'center',
-            'background-color': '#70747c',
-            'color':'white',
-            'fontWeight': 'bold',
-            'fontSize':16},
-        outline=True)
+        card4 = dbc.Card([
+                dbc.CardBody([
+                    html.P(f'Month with Most Fires'),
+                    html.H5(f"{most_frequent_month}")
+                ])
+            ],
+            style={'display': 'inline-block',
+                'width': '100%',
+                'text-align': 'center',
+                'background-color': '#70747c',
+                'color':'white',
+                'fontWeight': 'bold',
+                'fontSize':16},
+            outline=True)
 
-    card5 = dbc.Card([
-            dbc.CardBody([
-                html.P(f'Total Fires in Last Year'),
-                html.H5(f"{most_frequent_month} ({most_frequent_month_num})")
-            ])
-        ],
-        style={'display': 'inline-block',
-            'width': '100%',
-            'text-align': 'center',
-            'background-color': '#70747c',
-            'color':'white',
-            'fontWeight': 'bold',
-            'fontSize':16},
-        outline=True)
+        last_year = filtered_df[filtered_df['StartDate']>='2015-01-01']
+        fires_in_last_year = last_year.shape[0]
+
+        card5 = dbc.Card([
+                dbc.CardBody([
+                    html.P(f'Total Fires in Last Year (2015)'),
+                    html.H5(f"{fires_in_last_year}")
+                ])
+            ],
+            style={'display': 'inline-block',
+                'width': '100%',
+                'text-align': 'center',
+                'background-color': '#70747c',
+                'color':'white',
+                'fontWeight': 'bold',
+                'fontSize':16},
+            outline=True)
 
 
-    card6 = dbc.Card([
-            dbc.CardBody([
-                html.P(f'Rolling Average of last year'),
-                html.H5(f"{most_frequent_month} ({most_frequent_month_num})")
-            ])
-        ],
-        style={'display': 'inline-block',
-            'width': '100%',
-            'text-align': 'center',
-            'background-color': '#70747c',
-            'color':'white',
-            'fontWeight': 'bold',
-            'fontSize':16},
-        outline=True)
+        annual_counts = filtered_df.groupby(filtered_df['StartDate'].dt.year).size().rename('Annual_Fire_Count')
+        annual_df = annual_counts.reset_index().rename(columns={'StartDate': 'Year'})
+    
+        # 1. Get the sorted DataFrame containing the max year/count row
+        max_year_df = annual_df.sort_values(by='Annual_Fire_Count', ascending=False).head(1)
+        
+        # 2. Extract the integer values from the DataFrame
+        max_year = int(max_year_df['Year'].iloc[0])
+        max_year_num = int(max_year_df['Annual_Fire_Count'].iloc[0]) 
 
+
+        card6 = dbc.Card([
+                dbc.CardBody([
+                    html.P(f'Year with Most Fires'),
+                    html.H5(f"{max_year} ({max_year_num})")
+                ])
+            ],
+            style={'display': 'inline-block',
+                'width': '100%',
+                'text-align': 'center',
+                'background-color': '#70747c',
+                'color':'white',
+                'fontWeight': 'bold',
+                'fontSize':16},
+            outline=True)
+
+    else:
+        median_acres = float(filtered_df['FIRE_SIZE'].median())
+
+        card4 = dbc.Card([
+                dbc.CardBody([
+                    html.P(f'Median Acreage Burned'),
+                    html.P('1992-2015'),
+                    html.H5(f"{median_acres} acres")
+                ])
+            ],
+            style={'display': 'inline-block',
+                'width': '100%',
+                'text-align': 'center',
+                'background-color': '#70747c',
+                'color':'white',
+                'fontWeight': 'bold',
+                'fontSize':16},
+            outline=True)
+
+        days_above_median = filtered_df[filtered_df["FIRE_SIZE"]>median_acres]
+        days_above_median = days_above_median[days_above_median['StartDate']>'2010-01-01']
+        days_above_median = days_above_median.shape[0]
+
+
+        card5 = dbc.Card([
+                dbc.CardBody([
+                    html.P(f'Exceeding Median Acreage Burned'),
+                    html.P('2010-2015'),
+                    html.H5(f"{days_above_median} days")
+                ])
+            ],
+            style={'display': 'inline-block',
+                'width': '100%',
+                'text-align': 'center',
+                'background-color': '#70747c',
+                'color':'white',
+                'fontWeight': 'bold',
+                'fontSize':16},
+            outline=True)
+
+        percentile90 = filtered_df['FIRE_SIZE'].quantile(0.90)
+        recent_fires = filtered_df[filtered_df['StartDate']>'2010-01-01']
+        top10percentile_fires = recent_fires[recent_fires['FIRE_SIZE']>=percentile90]
+
+        top10percentile_fires = top10percentile_fires.shape[0]
+
+
+        card6 = dbc.Card([
+                dbc.CardBody([
+                    html.P(f'Exceeding 90th Percentile Acreage Burned'),
+                    html.P('2010-2015'),
+                    html.H5(f"{top10percentile_fires} days")
+                ])
+            ],
+            style={'display': 'inline-block',
+                'width': '100%',
+                'text-align': 'center',
+                'background-color': '#70747c',
+                'color':'white',
+                'fontWeight': 'bold',
+                'fontSize':16},
+            outline=True)
 
     return card4, card5, card6
 
