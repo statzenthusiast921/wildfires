@@ -547,10 +547,20 @@ def tab1_cards(dd1, dd2, dd3, slider_range):
         filtered_df = filtered_df[filtered_df["STAT_CAUSE_DESCR"] == dd3]
 
 
+    state_df = raw_wf[
+        (raw_wf['state_name'] == dd1) &
+        (raw_wf['FIRE_YEAR'] >= slider_range[0]) &
+        (raw_wf['FIRE_YEAR'] <= slider_range[1])
+    ]
+
+    median_fires = state_df.groupby(['county_name','FIRE_YEAR']).size().reset_index(name = 'count')
+    median_fires_per_county = float(np.median(median_fires['count']))
+
+
     card1 = dbc.Card([
                 dbc.CardBody([
-                    html.P(f'Metric1'),
-                    html.H5(f"")
+                    html.P(f'Yearly Median # Fires in {dd1}'),
+                    html.H5(f"{median_fires_per_county}")
                 ])
             ],
             style={'display': 'inline-block',
@@ -743,8 +753,7 @@ def timeline_of_fires(dd4, dd5, dd6, dd7):
 
         card4 = dbc.Card([
                 dbc.CardBody([
-                    html.P(f'Median Acreage Burned'),
-                    html.P('1992-2015'),
+                    html.P(f'Median Acres Burned (1992-2015)'),
                     html.H5(f"{median_acres} acres")
                 ])
             ],
@@ -759,13 +768,12 @@ def timeline_of_fires(dd4, dd5, dd6, dd7):
 
         days_above_median = filtered_df[filtered_df["FIRE_SIZE"]>median_acres]
         days_above_median = days_above_median[days_above_median['StartDate']>'2010-01-01']
-        days_above_median = days_above_median.shape[0]
+        days_above_median = days_above_median['StartDate'].nunique()
 
 
         card5 = dbc.Card([
                 dbc.CardBody([
-                    html.P(f'Exceeding Median Acreage Burned'),
-                    html.P('2010-2015'),
+                    html.P(f'> Median Acres Burned (2010-2015)'),
                     html.H5(f"{days_above_median} days")
                 ])
             ],
@@ -782,13 +790,12 @@ def timeline_of_fires(dd4, dd5, dd6, dd7):
         recent_fires = filtered_df[filtered_df['StartDate']>'2010-01-01']
         top10percentile_fires = recent_fires[recent_fires['FIRE_SIZE']>=percentile90]
 
-        top10percentile_fires = top10percentile_fires.shape[0]
 
+        top10percentile_fires = top10percentile_fires['StartDate'].nunique()
 
         card6 = dbc.Card([
                 dbc.CardBody([
-                    html.P(f'Exceeding 90th Percentile Acreage Burned'),
-                    html.P('2010-2015'),
+                    html.P(f'> 90th Percentile Acres Burned (2010-2015)'),
                     html.H5(f"{top10percentile_fires} days")
                 ])
             ],
