@@ -537,14 +537,35 @@ def tab1_cards(dd1, dd2, dd3, slider_range):
         (raw_wf['FIRE_YEAR'] <= slider_range[1])
     ]
 
-    # filtered_df = raw_wf[
-    #     (raw_wf['state_name'] == "Oregon") &
-    #     (raw_wf['county_name'] == "Multnomah County") &
-    #     (raw_wf['FIRE_YEAR'] >= 2010) &
-    #     (raw_wf['FIRE_YEAR'] <= 2015)
-    # ]
+    filtered_df2 = raw_wf[
+        (raw_wf['state_name'] == dd1) &
+        (raw_wf['county_name'] == dd2) &
+        (raw_wf['FIRE_YEAR'] >= slider_range[0]) &
+        (raw_wf['FIRE_YEAR'] <= slider_range[1])
+    ]
     if dd3 != "All":
         filtered_df = filtered_df[filtered_df["STAT_CAUSE_DESCR"] == dd3]
+
+
+
+    median_fires = filtered_df2.groupby(['FIRE_YEAR']).size().reset_index(name = 'count')
+    metric1 = float(np.median(median_fires['count']))
+
+
+    card1 = dbc.Card([
+                dbc.CardBody([
+                    html.P(f'Median # Fires in {dd2}'),
+                    html.H5(f"{metric1}")
+                ])
+            ],
+            style={'display': 'inline-block',
+                'width': '100%',
+                'text-align': 'center',
+                'background-color': '#70747c',
+                'color':'white',
+                'fontWeight': 'bold',
+                'fontSize':16},
+            outline=True)
 
 
     state_df = raw_wf[
@@ -552,31 +573,15 @@ def tab1_cards(dd1, dd2, dd3, slider_range):
         (raw_wf['FIRE_YEAR'] >= slider_range[0]) &
         (raw_wf['FIRE_YEAR'] <= slider_range[1])
     ]
-
-    median_fires = state_df.groupby(['county_name','FIRE_YEAR']).size().reset_index(name = 'count')
-    median_fires_per_county = float(np.median(median_fires['count']))
-
-
-    card1 = dbc.Card([
-                dbc.CardBody([
-                    html.P(f'Yearly Median # Fires in {dd1}'),
-                    html.H5(f"{median_fires_per_county}")
-                ])
-            ],
-            style={'display': 'inline-block',
-                'width': '100%',
-                'text-align': 'center',
-                'background-color': '#70747c',
-                'color':'white',
-                'fontWeight': 'bold',
-                'fontSize':16},
-            outline=True)
-
+    county_median_fires = state_df.groupby(['county_name','FIRE_YEAR']).size().reset_index(name = 'count')
+    median_per_county_df = county_median_fires.groupby('county_name')['count'].median().reset_index(name='MedianAnnualFires')
+    filter_metric = median_per_county_df[median_per_county_df['MedianAnnualFires']>metric1]
+    metric2 = filter_metric.shape[0]
 
     card2 = dbc.Card([
                 dbc.CardBody([
-                    html.P(f'Metric2'),
-                    html.H5(f"")
+                    html.P(f'Median # Fires > {metric1} in {dd1}'),
+                    html.H5(f"{metric2} counties")
                 ])
             ],
             style={'display': 'inline-block',
@@ -588,11 +593,17 @@ def tab1_cards(dd1, dd2, dd3, slider_range):
                 'fontSize':16},
             outline=True)
 
+    county_median_fires = state_df.groupby(['county_name','FIRE_YEAR']).size().reset_index(name = 'count')
+    median_per_county_df = county_median_fires.groupby('county_name')['count'].median().reset_index(name='MedianAnnualFires')
+    
+    percentile_90 = median_per_county_df['MedianAnnualFires'].quantile(0.90)
+    filter_metric = median_per_county_df[median_per_county_df['MedianAnnualFires']>percentile_90]
+    metric3 = filter_metric.shape[0]
 
     card3 = dbc.Card([
                 dbc.CardBody([
-                    html.P(f'Metric3'),
-                    html.H5(f"")
+                    html.P(f'Median # Fires > 90th Percentile in {dd1}'),
+                    html.H5(f"{metric3} counties")
                 ])
             ],
             style={'display': 'inline-block',
