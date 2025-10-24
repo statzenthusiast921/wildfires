@@ -12,11 +12,6 @@ from urllib.request import urlopen
 import plotly.io as pio
 pio.renderers.default = "vscode"
 import plotly.graph_objects as go
-from scipy.stats import linregress
-
-
-print("Hello!")
-
 
 #-----Read in and set up data
 raw_wf1 = pd.read_csv('https://raw.githubusercontent.com/statzenthusiast921/wildfires/refs/heads/main/data/raw_wildfires_part1.csv', low_memory=False)
@@ -36,6 +31,7 @@ raw_wf['FIPS'] = raw_wf.apply(
     axis=1
 )
 
+fc_wf['stage'] = np.where(fc_wf['stage']=="actuals","Actuals","Forecast")
 #----- Condense cause categories down a bit
 cause_mapping = {
     # Map multiple specific causes to a single "Human - Equipment" category
@@ -83,7 +79,6 @@ df_for_dict = df_for_dict.drop_duplicates(subset='county_name',keep='first')
 state_county_dict = df_for_dict.groupby('state_name')['county_name'] \
                                .apply(lambda x: sorted(x)) \
                                .to_dict()
-
 
 #----- Define style for different pages in app
 tabs_styles = {
@@ -137,7 +132,7 @@ app.layout = html.Div([
                 ],style={'text-decoration': 'underline'}),
                    
                 html.Div([
-                    html.P(["The data utilized for this analysis was taken from this Kaggle link",html.A('here',href='https://www.kaggle.com/datasets/rtatman/188-million-us-wildfires'), '.'],style={'color':'white'}),
+                    html.P(["The data utilized for this analysis was taken from this Kaggle link ",html.A('here',href='https://www.kaggle.com/datasets/rtatman/188-million-us-wildfires'), '.'],style={'color':'white'}),
                     html.Br()
                 ]),
                 html.Div([
@@ -297,7 +292,7 @@ app.layout = html.Div([
                     ])
                 ]
             ),
-            dcc.Tab(label='FC?',value='tab-4',style=tab_style, selected_style=tab_selected_style,
+            dcc.Tab(label='What do we expect for the future?',value='tab-4',style=tab_style, selected_style=tab_selected_style,
                 children = [
                     dbc.Row([
                         dbc.Col([
@@ -319,7 +314,12 @@ app.layout = html.Div([
                                 options=[{'label': i, 'value': i} for i in county_choices],
                                 value=county_choices[0]
                             )
-                        ], width = 6),
+                        ], width = 6)
+                    ]),
+                    dbc.Row([
+                        dbc.Col([
+                            dcc.Graph(id = 'forecast_chart')
+                        ])
                     ])
                 ]
             )
@@ -679,7 +679,7 @@ def county_chart(dd1, dd2, slider_range):
     Input('dropdown6','value'),
     Input('dropdown7','value')
 )
-def timeline_of_fires(dd4, dd5, dd6, dd7):
+def card_row2(dd4, dd5, dd6, dd7):
 
     filtered_df = raw_wf[
         (raw_wf['state_name']==dd4) &
@@ -1045,7 +1045,46 @@ def timeline_of_fires(dd4, dd5, dd6, dd7):
             )
 
         return fig
-        
+
+@app.callback(
+    Output('forecast_chart', 'figure'),
+    Input('dropdown8', 'value'),
+    Input('dropdown9', 'value')
+)
+def forecast_chart(dd8, dd9):
+
+    filtered_df = fc_wf[(fc_wf['state_name'] == dd8) & (fc_wf['county_name'] == dd9)]
+    filtered_df['MonthStart'] = pd.to_datetime(filtered_df['MonthStart'])
+
+    fig = px.line(
+            filtered_df, 
+            x='MonthStart', y='value',
+            color='stage',
+            labels={
+                "MonthStart": "Date", 
+                "value": "# Fires", 
+                'stage': 'Key'
+            },
+            title=f"4-Year Fire Forecast for {dd9}",
+            template="plotly_dark" 
+    )
+
+    fig.update_layout(
+            xaxis_title="Month",
+            xaxis=dict(
+                dtick="M12", 
+                tickformat="%Y-%m-%d",
+                tickangle=270
+            ),
+            legend=dict(
+                y=1,
+                x=1,
+                xanchor="right", 
+                yanchor="top" 
+            )
+    )
+
+    return fig
 
 if __name__=='__main__':
     app.run(debug=True)
