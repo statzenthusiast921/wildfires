@@ -8,7 +8,7 @@ The purpose of this project was to determine:
 - what causes these fires?
 - when do these fires most often occur?
 - have fires been lasting longer or buring more acres over time?
-- can I build a model to predict fire frequency??
+- can I build a model to predict fire frequency?
 
 ## Data
 The data used for this analysis was downloaded from [this Kaggle link](https://www.kaggle.com/datasets/rtatman/188-million-us-wildfires) which contains daily fire records for nearly 2 million separate fires across the country from 1992 to 2015.  I filtered the data to just the states of Washington, Oregon, and California.
