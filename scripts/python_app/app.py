@@ -124,7 +124,7 @@ app.layout = html.Div([
                     html.P("2.) What causes these fires?",style={'color':'white'}),
                     html.P("3.) When do these fires most often occur?",style={'color':'white'}),
                     html.P("4.) Have fires been lasting longer or buring more acres over time?",style={'color':'white'}),
-                    html.P("5.) Can we build a model to predict fire frequency??",style={'color':'white'}),
+                    html.P("5.) Can we build a model to predict fire frequency?",style={'color':'white'}),
                     html.Br()
                 ]),
                 html.Div([
@@ -139,8 +139,7 @@ app.layout = html.Div([
                     html.P(dcc.Markdown('''**What are the limitations of this data?**'''),style={'color':'white'}),
                 ],style={'text-decoration': 'underline'}),
                 html.Div([
-                    html.P("1.) To build a truly solid model, I would need daily precipitation data which was difficult to find.",style={'color':'white'}),
-                    html.P("2.) Limitation 2 .",style={'color':'white'}),
+                    html.P("1.) To build a truly solid model, I would need daily precipitation and soil moisture data which was difficult to find.",style={'color':'white'})
                 ])
             ]),
             dcc.Tab(label='Where do most fires occur?',value='tab-2',style=tab_style, selected_style=tab_selected_style,
@@ -315,6 +314,17 @@ app.layout = html.Div([
                                 value=county_choices[0]
                             )
                         ], width = 6)
+                    ]),
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Card(id='card7')
+                        ], width = 4),
+                        dbc.Col([
+                            dbc.Card(id='card8')
+                        ], width = 4),
+                        dbc.Col([
+                            dbc.Card(id='card9')
+                        ], width = 4),
                     ]),
                     dbc.Row([
                         dbc.Col([
@@ -1045,6 +1055,102 @@ def timeline_of_fires(dd4, dd5, dd6, dd7):
             )
 
         return fig
+
+
+
+@app.callback(
+    Output('card7','children'),
+    Output('card8','children'),
+    Output('card9','children'),
+    Input('dropdown8','value'),
+    Input('dropdown9','value')
+)
+def tab3_cards(dd8, dd9):
+
+    state_fires = fc_wf[
+        (fc_wf['state_name'] == dd8) 
+    ]
+
+    county_sum_of_fires = state_fires.groupby('county_name')['value'].sum().reset_index()   
+    county_sum_of_fires = county_sum_of_fires.sort_values(by='value', ascending=False).reset_index(drop=True)
+    county_sum_of_fires['rank'] = county_sum_of_fires.index + 1
+
+    #----- Pull out rank as numerator
+    rank1 = int(county_sum_of_fires[county_sum_of_fires['county_name']==dd9]['rank'].values[0])
+    total_counties1 = county_sum_of_fires.shape[0]
+
+    card7 = dbc.Card([
+                dbc.CardBody([
+                    html.P(f'Rank Total # Fires (1992-2015)'),
+                    html.H5(f"{rank1} out of {total_counties1}")
+                ])
+            ],
+            style={'display': 'inline-block',
+                'width': '100%',
+                'text-align': 'center',
+                'background-color': '#70747c',
+                'color':'white',
+                'fontWeight': 'bold',
+                'fontSize':16},
+            outline=True)
+
+    state_fires2 = state_fires[state_fires['MonthStart']>='1/1/10']
+    county_sum_of_fires2 = state_fires2.groupby('county_name')['value'].sum().reset_index()   
+    county_sum_of_fires2 = county_sum_of_fires2.sort_values(by='value', ascending=False).reset_index(drop=True)
+    county_sum_of_fires2['rank'] = county_sum_of_fires2.index + 1
+
+    #----- Pull out rank as numerator
+    rank2 = int(county_sum_of_fires2[county_sum_of_fires2['county_name']==dd9]['rank'].values[0])
+    total_counties2 = county_sum_of_fires2.shape[0]
+
+    card8 = dbc.Card([
+                dbc.CardBody([
+                    html.P(f'Rank Total # Fires (2010-2015)'),
+                    html.H5(f"{rank2} out of {total_counties2}")
+                ])
+            ],
+            style={'display': 'inline-block',
+                'width': '100%',
+                'text-align': 'center',
+                'background-color': '#70747c',
+                'color':'white',
+                'fontWeight': 'bold',
+                'fontSize':16},
+            outline=True)
+
+    fcs = state_fires[state_fires['stage']=="Forecast"]
+    fcs = fcs[fcs['county_name']==dd9]
+    fcs['MonthStart'] = pd.to_datetime(fcs['MonthStart'], format='%m/%d/%y')
+    fcs['year'] = fcs['MonthStart'].dt.year
+
+    fc_years = fcs.groupby('year')['value'].sum().reset_index()   
+    from scipy.stats import linregress
+
+    #---- Quick little mini regression to grab slope (direction)
+    X = fc_years['year'] 
+    Y = fc_years['value'] 
+
+    slope, intercept, r_value, p_value, std_err = linregress(X, Y)
+
+    direction = str(np.where(float(slope)>0, "Increasing", "Decreasing"))
+
+
+    card9 = dbc.Card([
+                dbc.CardBody([
+                    html.P(f'Fire Forecast Trajectory'),
+                    html.H5(f"{direction}")
+                ])
+            ],
+            style={'display': 'inline-block',
+                'width': '100%',
+                'text-align': 'center',
+                'background-color': '#70747c',
+                'color':'white',
+                'fontWeight': 'bold',
+                'fontSize':16},
+            outline=True)
+
+    return card7, card8, card9
 
 @app.callback(
     Output('forecast_chart', 'figure'),
