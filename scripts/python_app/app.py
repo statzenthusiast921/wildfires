@@ -12,6 +12,7 @@ from urllib.request import urlopen
 import plotly.io as pio
 pio.renderers.default = "vscode"
 import plotly.graph_objects as go
+from scipy.stats import linregress
 
 #-----Read in and set up data
 raw_wf1 = pd.read_csv('https://raw.githubusercontent.com/statzenthusiast921/wildfires/refs/heads/main/data/raw_wildfires_part1.csv', low_memory=False)
@@ -1124,8 +1125,6 @@ def tab3_cards(dd8, dd9):
     fcs['year'] = fcs['MonthStart'].dt.year
 
     fc_years = fcs.groupby('year')['value'].sum().reset_index()   
-    from scipy.stats import linregress
-
     #---- Quick little mini regression to grab slope (direction)
     X = fc_years['year'] 
     Y = fc_years['value'] 
