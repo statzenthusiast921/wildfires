@@ -1191,5 +1191,9 @@ def forecast_chart(dd8, dd9):
 
     return fig
 
+# if __name__=='__main__':
+#     app.run(debug=True)
+
+
 if __name__=='__main__':
-    app.run(debug=True)
+    app.run_server()
