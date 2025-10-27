@@ -1206,5 +1206,6 @@ def forecast_chart(dd8, dd9):
 
     return fig
 
-if __name__=='__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run_server(host="0.0.0.0", port=os.environ.get("PORT", 8080), debug=False)
+
