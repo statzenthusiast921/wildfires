@@ -9,8 +9,8 @@ from dash.dependencies import Input, Output, State
 from dash import dash_table
 import json
 from urllib.request import urlopen
-import plotly.io as pio
-pio.renderers.default = "vscode"
+#import plotly.io as pio
+#pio.renderers.default = "vscode"
 import plotly.graph_objects as go
 from scipy.stats import linregress
 
