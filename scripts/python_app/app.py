@@ -5,14 +5,11 @@ import plotly.express as px
 import dash
 from dash import dcc, html
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
-from dash import dash_table
+from dash.dependencies import Input, Output
 import json
 from urllib.request import urlopen
-#import plotly.io as pio
-#pio.renderers.default = "vscode"
 import plotly.graph_objects as go
-from scipy.stats import linregress
+
 
 #-----Read in and set up data
 raw_wf1 = pd.read_csv('https://raw.githubusercontent.com/statzenthusiast921/wildfires/refs/heads/main/data/raw_wildfires_part1.csv', low_memory=False)
@@ -1125,11 +1122,29 @@ def tab3_cards(dd8, dd9):
     fcs['year'] = fcs['MonthStart'].dt.year
 
     fc_years = fcs.groupby('year')['value'].sum().reset_index()   
-    #---- Quick little mini regression to grab slope (direction)
-    X = fc_years['year'] 
-    Y = fc_years['value'] 
 
-    slope, intercept, r_value, p_value, std_err = linregress(X, Y)
+    #---- Quick little mini regression to grab slope (direction)
+    X_years = fc_years['year'].tolist()
+    Y_forecast = fc_years['value'].tolist()
+
+
+    N = len(X_years)
+
+    # 1. Calculate the necessary sums
+    sum_X = sum(X_years)
+    sum_Y = sum(Y_forecast)
+    sum_XY = sum(x * y for x, y in zip(X_years, Y_forecast))
+    sum_X2 = sum(x * x for x in X_years)
+
+    # 2. Apply the Least-Squares Slope Formula (m)
+    # Formula: m = [N * (Sum XY) - (Sum X) * (Sum Y)] / [N * (Sum X^2) - (Sum X)^2]
+    numerator = N * sum_XY - sum_X * sum_Y
+    denominator = N * sum_X2 - sum_X ** 2
+
+    if denominator == 0:
+        slope = 0
+    else:
+        slope = numerator / denominator
 
     direction = str(np.where(float(slope)>0, "Increasing", "Decreasing"))
 
@@ -1191,9 +1206,5 @@ def forecast_chart(dd8, dd9):
 
     return fig
 
-# if __name__=='__main__':
-#     app.run(debug=True)
-
-
 if __name__=='__main__':
-    app.run_server()
+    app.run(debug=True)
