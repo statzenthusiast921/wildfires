@@ -9,6 +9,5 @@ itsdangerous==2.2.0
 click==8.3.0
 blinker==1.9.0
 setuptools==80.9.0
-scipy==1.16.2
 pandas==2.3.2
 
