@@ -9,27 +9,32 @@ from dash.dependencies import Input, Output
 import json
 from urllib.request import urlopen
 import plotly.graph_objects as go
-
+import pyarrow
 
 #-----Read in and set up data
-raw_wf1 = pd.read_csv('https://raw.githubusercontent.com/statzenthusiast921/wildfires/refs/heads/main/data/raw_wildfires_part1.csv', low_memory=False)
-raw_wf2 = pd.read_csv('https://raw.githubusercontent.com/statzenthusiast921/wildfires/refs/heads/main/data/raw_wildfires_part2.csv')
-fc_wf = pd.read_csv('https://raw.githubusercontent.com/statzenthusiast921/wildfires/refs/heads/main/data/wildfire_forecast_results.csv')
-state_county_refs = pd.read_csv('https://raw.githubusercontent.com/statzenthusiast921/wildfires/refs/heads/main/data/state_county_references.csv')
-state_county_refs = state_county_refs.rename(
-    columns={
-        'fips_code_lz': 'FIPS', 
-    }
-)
-raw_wf = pd.concat([raw_wf1,raw_wf2],ignore_index=True)
-raw_wf = pd.merge(raw_wf, state_county_refs, on='FIPS', how='left')
-raw_wf['FIPS'] = raw_wf['FIPS'].astype(str)
-raw_wf['FIPS'] = raw_wf.apply(
-    lambda row: '0' + str(row['FIPS']) if row['state_name'] == 'California' else str(row['FIPS']),
-    axis=1
-)
+# raw_wf1 = pd.read_csv('https://raw.githubusercontent.com/statzenthusiast921/wildfires/refs/heads/main/data/raw_wildfires_part1.csv', low_memory=False)
+# raw_wf2 = pd.read_csv('https://raw.githubusercontent.com/statzenthusiast921/wildfires/refs/heads/main/data/raw_wildfires_part2.csv')
+# fc_wf = pd.read_csv('https://raw.githubusercontent.com/statzenthusiast921/wildfires/refs/heads/main/data/wildfire_forecast_results.csv')
+# state_county_refs = pd.read_csv('https://raw.githubusercontent.com/statzenthusiast921/wildfires/refs/heads/main/data/state_county_references.csv')
+# state_county_refs = state_county_refs.rename(
+#     columns={
+#         'fips_code_lz': 'FIPS', 
+#     }
+# )
+# raw_wf = pd.concat([raw_wf1,raw_wf2],ignore_index=True)
+# raw_wf = pd.merge(raw_wf, state_county_refs, on='FIPS', how='left')
+# raw_wf['FIPS'] = raw_wf['FIPS'].astype(str)
+# raw_wf['FIPS'] = raw_wf.apply(
+#     lambda row: '0' + str(row['FIPS']) if row['state_name'] == 'California' else str(row['FIPS']),
+#     axis=1
+# )
 
-fc_wf['stage'] = np.where(fc_wf['stage']=="actuals","Actuals","Forecast")
+# fc_wf['stage'] = np.where(fc_wf['stage']=="actuals","Actuals","Forecast")
+url = "https://github.com/statzenthusiast921/wildfires/raw/main/data/raw_wf_parquet.parquet"
+raw_wf = pd.read_parquet(url, engine='pyarrow')
+url2 = "https://github.com/statzenthusiast921/wildfires/raw/main/data/fc_wf_parquet.parquet"
+fc_wf = pd.read_parquet(url2, engine='pyarrow')
+
 #----- Condense cause categories down a bit
 cause_mapping = {
     # Map multiple specific causes to a single "Human - Equipment" category
